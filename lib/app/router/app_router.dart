@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/students/presentation/add_student_screen.dart';
+import '../../features/students/presentation/student_detail_screen.dart';
+import '../../features/students/presentation/students_list_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 
 // ---------------------------------------------------------------------------
@@ -102,10 +105,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.instructorStudents,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Students — to be implemented')),
-                ),
+                path: '/instructor/students',
+                builder: (context, state) => const StudentsListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const AddStudentScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => StudentDetailScreen(
+                      studentId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
