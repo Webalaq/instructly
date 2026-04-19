@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../shared/widgets/app_scaffold.dart';
 
 // ---------------------------------------------------------------------------
@@ -63,9 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Onboarding — to be implemented')),
-        ),
+        builder: (context, state) => const OnboardingScreen(),
       ),
 
       // ------------------------------------------------------------------
