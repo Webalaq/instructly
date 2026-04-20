@@ -7,6 +7,8 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/bookings/presentation/booking_detail_screen.dart';
 import '../../features/bookings/presentation/calendar_screen.dart';
 import '../../features/bookings/presentation/create_booking_screen.dart';
+import '../../features/dashboard/presentation/instructor_dashboard_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/students/presentation/add_student_screen.dart';
 import '../../features/students/presentation/student_detail_screen.dart';
@@ -31,6 +33,9 @@ class AppRoutes {
 
   static const instructorCalendarCreate = '/instructor/calendar/create';
   static const instructorCalendarBooking = '/instructor/calendar/booking';
+
+  // Full-screen routes (pushed on top of the shell)
+  static const notifications = '/notifications';
 
   // Student shell branches
   static const student = '/student';
@@ -75,6 +80,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
 
       // ------------------------------------------------------------------
       // Instructor shell (StatefulShellRoute with bottom nav)
@@ -90,9 +99,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.instructor,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Instructor Dashboard — to be implemented')),
-                ),
+                builder: (context, state) =>
+                    const InstructorDashboardScreen(),
               ),
             ],
           ),
