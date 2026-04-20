@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,8 +9,10 @@ import '../../features/bookings/presentation/booking_detail_screen.dart';
 import '../../features/bookings/presentation/calendar_screen.dart';
 import '../../features/bookings/presentation/create_booking_screen.dart';
 import '../../features/dashboard/presentation/instructor_dashboard_screen.dart';
+import '../../features/dashboard/presentation/student_home_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/progress/presentation/progress_screen.dart';
 import '../../features/students/presentation/add_student_screen.dart';
 import '../../features/students/presentation/student_detail_screen.dart';
 import '../../features/students/presentation/students_list_screen.dart';
@@ -175,9 +178,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.student,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Bookings — to be implemented')),
-                ),
+                builder: (context, state) => const StudentHomeScreen(),
               ),
             ],
           ),
@@ -186,8 +187,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.studentProgress,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Progress — to be implemented')),
+                builder: (context, state) => ProgressScreen(
+                  studentId: FirebaseAuth.instance.currentUser!.uid,
+                  editable: false,
                 ),
               ),
             ],
