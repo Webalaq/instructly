@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/bookings/presentation/booking_detail_screen.dart';
+import '../../features/bookings/presentation/calendar_screen.dart';
+import '../../features/bookings/presentation/create_booking_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/students/presentation/add_student_screen.dart';
 import '../../features/students/presentation/student_detail_screen.dart';
@@ -25,6 +28,9 @@ class AppRoutes {
   static const instructorCalendar = '/instructor/calendar';
   static const instructorStudents = '/instructor/students';
   static const instructorMore = '/instructor/more';
+
+  static const instructorCalendarCreate = '/instructor/calendar/create';
+  static const instructorCalendarBooking = '/instructor/calendar/booking';
 
   // Student shell branches
   static const student = '/student';
@@ -95,9 +101,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.instructorCalendar,
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Calendar — to be implemented')),
-                ),
+                builder: (context, state) => const CalendarScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    builder: (context, state) =>
+                        const CreateBookingScreen(),
+                  ),
+                  GoRoute(
+                    path: 'booking/:id',
+                    builder: (context, state) => BookingDetailScreen(
+                      bookingId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
