@@ -8,10 +8,25 @@ import {
   BookOpenIcon,
   UserIcon,
   MapPinIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  SendIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { SKILL_LABELS, type SkillKey } from "@/lib/schemas/lesson-notes";
+
+function MiniSparkline({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 50 20" className="size-10" fill="none">
+      <path
+        d="M0 18 Q8 16 12 12 T24 8 T36 4 T50 2"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 export default async function StudentDashboard() {
   const supabase = await createClient();
@@ -21,19 +36,16 @@ export default async function StudentDashboard() {
     redirect("/login");
   }
 
-  // Find student record
   let { data: studentRecord } = await supabase
     .from("students")
     .select("id, instructor_id, full_name, status, theory_passed, test_date")
     .eq("profile_id", user.id)
     .single();
 
-  // Fallback: try auto-link if invite_code exists but student not linked yet
   if (!studentRecord && user.user_metadata?.invite_code) {
     const { linkStudentToInstructor } = await import("@/app/(auth)/actions");
     await linkStudentToInstructor(user.user_metadata.invite_code as string);
 
-    // Re-fetch
     const res = await supabase
       .from("students")
       .select("id, instructor_id, full_name, status, theory_passed, test_date")
@@ -57,7 +69,6 @@ export default async function StudentDashboard() {
     );
   }
 
-  // Get instructor info
   const { data: instructor } = await supabase
     .from("profiles")
     .select("full_name, phone")
@@ -70,7 +81,6 @@ export default async function StudentDashboard() {
     .eq("instructor_id", studentRecord.instructor_id)
     .single();
 
-  // Next upcoming lesson
   const { data: nextBookings } = await supabase
     .from("bookings")
     .select("id, start_at, end_at, pickup_location, price_pence")
@@ -82,14 +92,12 @@ export default async function StudentDashboard() {
 
   const nextLesson = nextBookings?.[0];
 
-  // Total lessons completed
   const { count: completedCount } = await supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
     .eq("student_id", studentRecord.id)
     .eq("status", "completed");
 
-  // Latest skill ratings
   const { data: latestRatings } = await supabase
     .from("skill_ratings")
     .select("skill_key, rating")
@@ -108,15 +116,18 @@ export default async function StudentDashboard() {
     ? (Array.from(ratingMap.values()).reduce((a, b) => a + b, 0) / ratedSkills).toFixed(1)
     : null;
 
+  const now = new Date();
   const firstName = user.user_metadata?.full_name?.split(" ")[0] || "there";
 
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
       {/* Greeting */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold md:text-2xl">Hi {firstName}</h1>
+        <h1 className="text-xl font-bold md:text-2xl">
+          Good {now.getHours() < 12 ? "morning" : now.getHours() < 18 ? "afternoon" : "evening"}, {firstName}!
+        </h1>
         <p className="text-sm text-muted-foreground">
-          {format(new Date(), "EEEE d MMMM yyyy")}
+          {format(now, "EEEE, d MMMM yyyy")}
         </p>
       </div>
 
@@ -126,25 +137,8 @@ export default async function StudentDashboard() {
           <h2 className="text-lg font-semibold">Welcome to Instructly!</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             You&apos;re connected with <span className="font-medium text-foreground">{instructor?.full_name ?? "your instructor"}</span>.
-            They&apos;ll schedule your lessons and you&apos;ll see everything here — upcoming lessons, progress, and notes.
+            They&apos;ll schedule your lessons and you&apos;ll see everything here.
           </p>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs text-muted-foreground">
-            <div className="rounded-lg border bg-card p-3">
-              <CalendarIcon className="mx-auto size-5 text-primary" />
-              <div className="mt-1 font-medium text-foreground">Calendar</div>
-              <div>See your schedule</div>
-            </div>
-            <div className="rounded-lg border bg-card p-3">
-              <BarChart3Icon className="mx-auto size-5 text-primary" />
-              <div className="mt-1 font-medium text-foreground">Progress</div>
-              <div>Track your skills</div>
-            </div>
-            <div className="rounded-lg border bg-card p-3">
-              <BookOpenIcon className="mx-auto size-5 text-primary" />
-              <div className="mt-1 font-medium text-foreground">Lessons</div>
-              <div>View notes</div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -172,23 +166,43 @@ export default async function StudentDashboard() {
         ) : (
           <div className="p-6 text-center text-muted-foreground">
             <p className="text-sm">No upcoming lessons booked</p>
-            <p className="mt-1 text-xs">Contact your instructor to schedule</p>
+            <p className="mt-1 text-xs">Request a lesson or contact your instructor</p>
           </div>
         )}
       </div>
 
-      {/* Stats row */}
+      {/* Stats grid */}
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <div className="rounded-xl border bg-card p-4 text-center">
-          <div className="text-2xl font-bold">{completedCount ?? 0}</div>
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-amber-100">
+              <ClockIcon className="size-3.5 text-amber-600" />
+            </div>
+            <MiniSparkline color="#d97706" />
+          </div>
+          <div className="mt-2 text-2xl font-bold">{completedCount ?? 0}</div>
           <div className="text-xs text-muted-foreground">Lessons done</div>
         </div>
-        <div className="rounded-xl border bg-card p-4 text-center">
-          <div className="text-2xl font-bold">{avgRating ?? "—"}</div>
+
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-green-100">
+              <BarChart3Icon className="size-3.5 text-green-600" />
+            </div>
+            <MiniSparkline color="#16a34a" />
+          </div>
+          <div className="mt-2 text-2xl font-bold">{avgRating ?? "—"}</div>
           <div className="text-xs text-muted-foreground">Avg rating</div>
         </div>
-        <div className="rounded-xl border bg-card p-4 text-center">
-          <div className="text-2xl font-bold">{ratedSkills}/12</div>
+
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-100">
+              <BookOpenIcon className="size-3.5 text-blue-600" />
+            </div>
+            <MiniSparkline color="#2563eb" />
+          </div>
+          <div className="mt-2 text-2xl font-bold">{ratedSkills}/12</div>
           <div className="text-xs text-muted-foreground">Skills rated</div>
         </div>
       </div>
@@ -197,10 +211,7 @@ export default async function StudentDashboard() {
       {ratedSkills > 0 && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold flex items-center gap-2">
-              <BarChart3Icon className="size-4 text-primary" />
-              Your skills
-            </h2>
+            <h2 className="text-base font-semibold">Your skills</h2>
             <Link href="/student/progress" className="text-sm text-primary font-medium">
               View all
             </Link>
@@ -210,9 +221,9 @@ export default async function StudentDashboard() {
               <div key={key} className="flex items-center justify-between rounded-lg border bg-card px-4 py-2.5">
                 <span className="text-sm">{SKILL_LABELS[key as SkillKey] ?? key}</span>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-16 rounded-full bg-muted">
+                  <div className="h-2.5 w-16 rounded-full bg-muted">
                     <div
-                      className="h-2 rounded-full bg-primary transition-all"
+                      className="h-2.5 rounded-full bg-primary transition-all"
                       style={{ width: `${(rating / 5) * 100}%` }}
                     />
                   </div>
@@ -224,23 +235,70 @@ export default async function StudentDashboard() {
         </div>
       )}
 
+      {/* Quick actions — list style */}
+      <div className="mt-6">
+        <h2 className="text-base font-semibold mb-3">Quick actions</h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Link href="/student/requests" className="flex items-center gap-4 rounded-xl border bg-card px-4 py-4 hover:bg-accent/50 active:scale-[0.98] transition-all">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-amber-100 shrink-0">
+              <SendIcon className="size-5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Request Lesson</div>
+              <div className="text-xs text-muted-foreground">Book available times</div>
+            </div>
+            <ChevronRightIcon className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+
+          <Link href="/student/calendar" className="flex items-center gap-4 rounded-xl border bg-card px-4 py-4 hover:bg-accent/50 active:scale-[0.98] transition-all">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-green-100 shrink-0">
+              <CalendarIcon className="size-5 text-green-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Calendar</div>
+              <div className="text-xs text-muted-foreground">View your schedule</div>
+            </div>
+            <ChevronRightIcon className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+
+          <Link href="/student/progress" className="flex items-center gap-4 rounded-xl border bg-card px-4 py-4 hover:bg-accent/50 active:scale-[0.98] transition-all">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100 shrink-0">
+              <BarChart3Icon className="size-5 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Progress</div>
+              <div className="text-xs text-muted-foreground">Track your skills</div>
+            </div>
+            <ChevronRightIcon className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+
+          <Link href="/student/lessons" className="flex items-center gap-4 rounded-xl border bg-card px-4 py-4 hover:bg-accent/50 active:scale-[0.98] transition-all">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-purple-100 shrink-0">
+              <BookOpenIcon className="size-5 text-purple-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold">Lessons</div>
+              <div className="text-xs text-muted-foreground">View notes &amp; history</div>
+            </div>
+            <ChevronRightIcon className="size-4 text-muted-foreground shrink-0" />
+          </Link>
+        </div>
+      </div>
+
       {/* Instructor info */}
-      <div className="mt-6 rounded-xl border bg-card p-4">
-        <h2 className="text-base font-semibold flex items-center gap-2 mb-3">
-          <UserIcon className="size-4 text-primary" />
-          Your instructor
-        </h2>
+      <div className="mt-6 rounded-xl border bg-primary p-4 text-primary-foreground">
+        <h2 className="text-sm font-semibold mb-3">Your instructor</h2>
         <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-lg shrink-0">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary-foreground/20 font-bold text-lg shrink-0">
             {instructor?.full_name?.[0] ?? "?"}
           </div>
           <div>
             <div className="font-medium">{instructor?.full_name ?? "Unknown"}</div>
             {instructorSettings?.business_name && (
-              <div className="text-sm text-muted-foreground">{instructorSettings.business_name}</div>
+              <div className="text-sm opacity-80">{instructorSettings.business_name}</div>
             )}
             {instructor?.phone && (
-              <a href={`tel:${instructor.phone}`} className="text-sm text-primary">
+              <a href={`tel:${instructor.phone}`} className="text-sm opacity-80 underline">
                 {instructor.phone}
               </a>
             )}
@@ -264,18 +322,6 @@ export default async function StudentDashboard() {
           </div>
         </div>
       )}
-
-      {/* Quick nav */}
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        <Link href="/student/progress" className={buttonVariants({ variant: "outline", className: "h-auto py-4 flex-col gap-1" })}>
-          <BarChart3Icon className="size-5" />
-          <span className="text-sm">Progress</span>
-        </Link>
-        <Link href="/student/lessons" className={buttonVariants({ variant: "outline", className: "h-auto py-4 flex-col gap-1" })}>
-          <BookOpenIcon className="size-5" />
-          <span className="text-sm">Lessons</span>
-        </Link>
-      </div>
     </div>
   );
 }

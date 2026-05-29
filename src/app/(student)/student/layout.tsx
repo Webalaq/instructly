@@ -12,7 +12,7 @@ export default async function StudentLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="theme-dashboard flex min-h-screen flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-56 md:flex-col md:border-r md:bg-card">
         <div className="flex h-16 items-center gap-2 border-b px-4">
