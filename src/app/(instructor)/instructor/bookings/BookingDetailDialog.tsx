@@ -18,15 +18,20 @@ import {
 
 import type { Booking } from "@/lib/schemas/booking";
 import type { Student } from "@/lib/schemas/student";
+import type { RecurringSlot, ExistingBooking } from "@/lib/availability";
 import { cancelBooking, completeBooking } from "./actions";
 import BookingDialog from "./BookingDialog";
 import LessonNoteDialog from "./LessonNoteDialog";
+import InstructorRescheduleDialog from "../requests/InstructorRescheduleDialog";
 
 interface BookingDetailDialogProps {
   booking: Booking;
   students: Student[];
   defaultPricePence: number;
   defaultLessonMinutes: number;
+  recurring: RecurringSlot[];
+  blocked: string[];
+  existingBookings: ExistingBooking[];
   trigger: React.ReactNode;
 }
 
@@ -42,6 +47,9 @@ export default function BookingDetailDialog({
   students,
   defaultPricePence,
   defaultLessonMinutes,
+  recurring,
+  blocked,
+  existingBookings,
   trigger,
 }: BookingDetailDialogProps) {
   const router = useRouter();
@@ -170,6 +178,15 @@ export default function BookingDetailDialog({
                     defaultPricePence={defaultPricePence}
                     defaultLessonMinutes={defaultLessonMinutes}
                     trigger={<Button variant="outline">Edit</Button>}
+                  />
+                  <InstructorRescheduleDialog
+                    bookingId={booking.id}
+                    currentStartAt={booking.start_at}
+                    durationMinutes={Math.round((new Date(booking.end_at).getTime() - new Date(booking.start_at).getTime()) / 60000)}
+                    recurring={recurring}
+                    blocked={blocked}
+                    bookings={existingBookings}
+                    trigger={<Button variant="outline">Reschedule</Button>}
                   />
                   <Button variant="destructive" onClick={() => setCancelling(true)}>
                     Cancel

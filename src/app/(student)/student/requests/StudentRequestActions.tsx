@@ -3,35 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { respondToRequest } from "./actions";
+import { respondToReschedule } from "./actions";
 
-export default function RequestActions({
-  requestId,
-  initiatedBy,
-}: {
-  requestId: string;
-  initiatedBy: string;
-}) {
+export default function StudentRequestActions({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  if (initiatedBy === "instructor") {
-    return (
-      <div className="mt-3 border-t pt-3 text-sm text-muted-foreground">
-        Awaiting student response
-      </div>
-    );
-  }
-
   async function handle(status: "accepted" | "declined") {
     setLoading(true);
-    await respondToRequest(requestId, status);
+    await respondToReschedule(requestId, status);
     setLoading(false);
     router.refresh();
   }
 
   return (
-    <div className="mt-3 flex gap-2 border-t pt-3">
+    <div className="mt-2 flex gap-2">
       <Button size="sm" className="h-10 flex-1" onClick={() => handle("accepted")} disabled={loading}>
         Accept
       </Button>

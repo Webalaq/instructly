@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Booking } from "@/lib/schemas/booking";
 import type { Student } from "@/lib/schemas/student";
+import type { RecurringSlot } from "@/lib/availability";
 import BookingDialog from "./BookingDialog";
 import BookingDetailDialog from "./BookingDetailDialog";
 
@@ -39,6 +40,8 @@ interface WeekCalendarProps {
   students: Student[];
   defaultPricePence: number;
   defaultLessonMinutes: number;
+  recurring: RecurringSlot[];
+  blocked: string[];
 }
 
 export default function WeekCalendar({
@@ -46,6 +49,8 @@ export default function WeekCalendar({
   students,
   defaultPricePence,
   defaultLessonMinutes,
+  recurring,
+  blocked,
 }: WeekCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<ViewMode>("day");
@@ -292,6 +297,9 @@ export default function WeekCalendar({
                               students={students}
                               defaultPricePence={defaultPricePence}
                               defaultLessonMinutes={defaultLessonMinutes}
+                              recurring={recurring}
+                              blocked={blocked}
+                              existingBookings={bookings.filter((x) => x.status === "scheduled").map((x) => ({ start_at: x.start_at, end_at: x.end_at }))}
                               trigger={
                                 <div className={`cursor-pointer rounded border-l-2 border-primary p-2 text-sm transition-colors bg-primary/10 active:bg-primary/25 ${
                                   view === "day" ? "flex items-center gap-3" : ""

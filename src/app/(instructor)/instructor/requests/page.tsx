@@ -54,15 +54,31 @@ export default async function InstructorRequestsPage() {
                       <div className="text-sm text-muted-foreground">
                         {r.duration_minutes} minutes
                       </div>
+                      {r.type === "reschedule" && r.proposed_start_at && (
+                        <div className="mt-1 text-sm">
+                          <span className="text-muted-foreground">Reschedule to: </span>
+                          <span className="font-medium text-primary">
+                            {format(parseISO(r.proposed_start_at), "EEE d MMM 'at' HH:mm")}
+                          </span>
+                        </div>
+                      )}
                       {r.message && (
                         <div className="mt-2 rounded-lg bg-muted/50 px-3 py-2 text-sm">
                           &ldquo;{r.message}&rdquo;
                         </div>
                       )}
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {r.initiated_by === "instructor" ? "Proposed by you" : "Requested by student"}
+                      </span>
                     </div>
-                    <Badge variant="outline">pending</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant="outline">pending</Badge>
+                      {r.type === "reschedule" && (
+                        <Badge variant="secondary" className="text-[10px]">reschedule</Badge>
+                      )}
+                    </div>
                   </div>
-                  <RequestActions requestId={r.id} />
+                  <RequestActions requestId={r.id} initiatedBy={r.initiated_by ?? "student"} />
                 </div>
               );
             })}
@@ -87,7 +103,12 @@ export default async function InstructorRequestsPage() {
               return (
                 <div key={r.id} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
                   <div>
-                    <div className="text-sm font-medium">{student?.full_name ?? "Unknown"}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{student?.full_name ?? "Unknown"}</span>
+                      {r.type === "reschedule" && (
+                        <Badge variant="secondary" className="text-[10px]">reschedule</Badge>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {format(parseISO(r.preferred_date), "d MMM")} at {r.preferred_time} · {r.duration_minutes}min
                     </div>

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { MapPinIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -147,9 +148,17 @@ export default function LessonCard({ lesson, canCancel }: { lesson: Lesson; canC
       {!cancelling && !feedbackMode && (
         <div className="mt-3 flex gap-2 border-t pt-3">
           {canCancel && lesson.status === "scheduled" && (
-            <Button variant="outline" className="h-11 text-destructive active:scale-95 transition-transform" onClick={() => setCancelling(true)}>
-              Cancel lesson
-            </Button>
+            <>
+              <Link
+                href={`/student/requests?reschedule=${lesson.id}&bookingTime=${encodeURIComponent(lesson.start_at)}`}
+                className={buttonVariants({ variant: "outline", className: "h-11 flex-1 active:scale-95 transition-transform" })}
+              >
+                Reschedule
+              </Link>
+              <Button variant="outline" className="h-11 text-destructive active:scale-95 transition-transform" onClick={() => setCancelling(true)}>
+                Cancel lesson
+              </Button>
+            </>
           )}
           {lesson.status === "completed" && note && (
             <Button variant="outline" className="h-11 active:scale-95 transition-transform" onClick={() => setFeedbackMode(true)}>
