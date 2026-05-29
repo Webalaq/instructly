@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { createBookingSchema, updateBookingSchema } from "@/lib/schemas/booking";
 import { sendWhatsAppMessage } from "@/lib/twilio/send";
 import { getPlanLimits } from "@/lib/stripe/plan-limits";
+import { sendNotification } from "@/lib/notifications/send";
 
 export async function createBooking(data: unknown) {
   const parsed = createBookingSchema.safeParse(data);
@@ -119,6 +121,26 @@ export async function cancelBooking(id: string, reason: string) {
         startAt: booking.start_at,
       }).catch(() => {});
     }
+
+    // Email + push cancellation notification to student
+    const { data: studentRecord } = await supabase
+      .from("students")
+      .select("profile_id")
+      .eq("id", booking.student_id)
+      .single();
+    if (studentRecord?.profile_id) {
+      sendNotification({
+        recipientUserId: studentRecord.profile_id,
+        event: "cancellation",
+        bookingId: booking.id,
+        data: {
+          studentName: student?.full_name,
+          instructorName: user.user_metadata?.full_name ?? "your instructor",
+          date: format(parseISO(booking.start_at), "EEEE d MMMM"),
+          time: format(parseISO(booking.start_at), "HH:mm"),
+        },
+      }).catch(() => {});
+    }
   }
 
   revalidatePath("/instructor/bookings");
@@ -139,6 +161,30 @@ export async function completeBooking(id: string) {
     .eq("id", id);
 
   if (error) return { error: "Failed to complete booking" };
+
+  // Notify student that lesson notes are available
+  const { data: completedBooking } = await supabase
+    .from("bookings")
+    .select("id, start_at, student_id, students(profile_id, full_name)")
+    .eq("id", id)
+    .single();
+  if (completedBooking) {
+    const s = Array.isArray(completedBooking.students)
+      ? completedBooking.students[0]
+      : completedBooking.students;
+    if (s?.profile_id) {
+      sendNotification({
+        recipientUserId: s.profile_id,
+        event: "lesson_completed",
+        bookingId: completedBooking.id,
+        data: {
+          studentName: s.full_name,
+          instructorName: user.user_metadata?.full_name,
+          date: format(parseISO(completedBooking.start_at), "EEEE d MMMM"),
+        },
+      }).catch(() => {});
+    }
+  }
 
   revalidatePath("/instructor/bookings");
   revalidatePath("/student/dashboard");

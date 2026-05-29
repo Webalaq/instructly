@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { format, parseISO } from "date-fns";
 import { createClient } from "@supabase/supabase-js";
 import { sendWhatsAppMessage } from "@/lib/twilio/send";
 import { getPlanLimits } from "@/lib/stripe/plan-limits";
+import { sendNotification } from "@/lib/notifications/send";
 
 // Service role client for reading bookings across all instructors
 function getServiceClient() {
@@ -30,6 +32,7 @@ export async function GET(request: Request) {
     .select(`
       id,
       start_at,
+      student_id,
       students(full_name, phone),
       instructor_id
     `)
@@ -92,6 +95,40 @@ export async function GET(request: Request) {
     });
 
     sentCount++;
+  }
+
+  // Email + push reminder for all plans
+  for (const booking of bookings) {
+    if (alreadySent.has(booking.id)) continue;
+
+    const student = Array.isArray(booking.students) ? booking.students[0] : booking.students;
+    if (!student) continue;
+
+    const { data: studentRecord } = await supabase
+      .from("students")
+      .select("profile_id")
+      .eq("id", booking.student_id)
+      .single();
+
+    if (!studentRecord?.profile_id) continue;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", booking.instructor_id)
+      .single();
+
+    sendNotification({
+      recipientUserId: studentRecord.profile_id,
+      event: "reminder_24h",
+      bookingId: booking.id,
+      data: {
+        studentName: student.full_name,
+        instructorName: profile?.full_name ?? "your instructor",
+        date: format(parseISO(booking.start_at), "EEEE d MMMM"),
+        time: format(parseISO(booking.start_at), "HH:mm"),
+      },
+    }).catch(() => {});
   }
 
   return NextResponse.json({ sent: sentCount });

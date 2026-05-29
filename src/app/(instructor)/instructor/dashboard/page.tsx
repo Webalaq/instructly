@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
+import { PushSubscriptionBanner } from "@/components/PushSubscriptionBanner";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { format, parseISO, startOfDay, endOfDay } from "date-fns";
@@ -11,7 +12,6 @@ import {
   BanknoteIcon,
   PlusIcon,
   ChevronRightIcon,
-  TrendingUpIcon,
   UserIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -114,6 +114,8 @@ export default async function InstructorDashboard() {
           </div>
         )}
       </div>
+
+      <PushSubscriptionBanner />
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">

@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { lessonRequestSchema, rescheduleRequestSchema } from "@/lib/schemas/lesson-request";
 import { computeAvailableSlots } from "@/lib/availability";
+import { sendNotification } from "@/lib/notifications/send";
 
 async function getStudentContext() {
   const supabase = await createClient();
@@ -158,6 +160,20 @@ export async function submitRescheduleRequest(data: unknown) {
 
   if (error) return { error: "Failed to submit reschedule request" };
 
+  // Notify instructor of student-initiated reschedule request
+  sendNotification({
+    recipientUserId: ctx.student.instructor_id,
+    event: "reschedule_request",
+    data: {
+      studentName: ctx.user.user_metadata?.full_name,
+      oldDate: booking.start_at ? format(parseISO(booking.start_at), "EEEE d MMMM") : undefined,
+      oldTime: booking.start_at ? format(parseISO(booking.start_at), "HH:mm") : undefined,
+      newDate: format(new Date(parsed.data.proposedStartAt), "EEEE d MMMM"),
+      newTime: format(new Date(parsed.data.proposedStartAt), "HH:mm"),
+      actionUrl: "/instructor/requests",
+    },
+  }).catch(() => {});
+
   revalidatePath("/student/requests");
   revalidatePath("/student/lessons");
   revalidatePath("/instructor/requests");
@@ -203,6 +219,25 @@ export async function respondToReschedule(requestId: string, status: "accepted" 
       return { error: "Failed to update booking time" };
     }
   }
+
+  // Notify instructor of student's reschedule response
+  sendNotification({
+    recipientUserId: ctx.student.instructor_id,
+    event: "reschedule_response",
+    data: {
+      studentName: ctx.user.user_metadata?.full_name,
+      status,
+      newDate: request.proposed_start_at
+        ? format(parseISO(request.proposed_start_at), "EEEE d MMMM")
+        : undefined,
+      newTime:
+        request.proposed_start_at && request.proposed_end_at
+          ? format(parseISO(request.proposed_start_at), "HH:mm") +
+            " – " +
+            format(parseISO(request.proposed_end_at), "HH:mm")
+          : undefined,
+    },
+  }).catch(() => {});
 
   revalidatePath("/student/requests");
   revalidatePath("/student/lessons");

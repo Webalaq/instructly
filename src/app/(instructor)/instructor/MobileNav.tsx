@@ -7,7 +7,6 @@ import {
   UsersIcon,
   CalendarIcon,
   PlusIcon,
-  BellIcon,
   UserIcon,
 } from "lucide-react";
 

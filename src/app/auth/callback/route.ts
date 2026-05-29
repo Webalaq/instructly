@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendNotification } from "@/lib/notifications/send";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -30,11 +31,46 @@ export async function GET(request: Request) {
             ? "/student/dashboard"
             : next;
 
+      // Send welcome notification (best-effort)
+      if (user) {
+        const inviteCode = role === "student" ? user.user_metadata?.invite_code : undefined;
+        const instructorName = inviteCode
+          ? await getInstructorName(supabase, inviteCode)
+          : undefined;
+        sendNotification({
+          recipientUserId: user.id,
+          recipientEmail: user.email ?? undefined,
+          event: "welcome",
+          data: {
+            studentName: user.user_metadata?.full_name,
+            instructorName,
+          },
+        }).catch(() => {});
+      }
+
       return NextResponse.redirect(`${origin}${redirectTo}`);
     }
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+}
+
+async function getInstructorName(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  inviteCode: string,
+): Promise<string | undefined> {
+  const { data } = await supabase
+    .from("instructor_settings")
+    .select("instructor_id")
+    .eq("invite_code", inviteCode.trim().toUpperCase())
+    .single();
+  if (!data) return undefined;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", data.instructor_id)
+    .single();
+  return profile?.full_name ?? undefined;
 }
 
 async function linkStudentToInstructor(

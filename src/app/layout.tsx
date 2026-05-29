@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -12,12 +12,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#16a34a",
+};
+
 export const metadata: Metadata = {
   title: "Instructly — Manage Your Driving School",
   description:
     "Bookings, lesson notes, progress tracking, and WhatsApp reminders for UK driving instructors.",
   manifest: "/manifest.json",
-  themeColor: "#16a34a",
 };
 
 export default function RootLayout({

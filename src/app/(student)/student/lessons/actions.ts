@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/twilio/send";
 import { getPlanLimits } from "@/lib/stripe/plan-limits";
+import { sendNotification } from "@/lib/notifications/send";
 
 export async function cancelStudentBooking(bookingId: string, reason: string) {
   const supabase = await createClient();
@@ -53,6 +55,19 @@ export async function cancelStudentBooking(bookingId: string, reason: string) {
         startAt: booking.start_at,
       }).catch(() => {});
     }
+
+    // Email + push cancellation notification to instructor
+    sendNotification({
+      recipientUserId: booking.instructor_id,
+      event: "cancellation",
+      bookingId: booking.id,
+      data: {
+        studentName: user.user_metadata?.full_name ?? "A student",
+        instructorName: instructor?.full_name ?? "Instructor",
+        date: format(parseISO(booking.start_at), "EEEE d MMMM"),
+        time: format(parseISO(booking.start_at), "HH:mm"),
+      },
+    }).catch(() => {});
   }
 
   revalidatePath("/student/lessons");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { format, parseISO } from "date-fns";
+import { PushSubscriptionBanner } from "@/components/PushSubscriptionBanner";
 import {
   CalendarIcon,
   BarChart3Icon,
@@ -130,6 +131,8 @@ export default async function StudentDashboard() {
           {format(now, "EEEE, d MMMM yyyy")}
         </p>
       </div>
+
+      <PushSubscriptionBanner />
 
       {/* Welcome banner for new students */}
       {(completedCount ?? 0) === 0 && !nextLesson && (
