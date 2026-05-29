@@ -3,7 +3,7 @@
 -- =============================================================
 
 -- 1. Lesson requests table (student suggests preferred times)
-create table lesson_requests (
+create table if not exists lesson_requests (
   id            uuid primary key default gen_random_uuid(),
   student_id    uuid not null references students(id) on delete cascade,
   instructor_id uuid not null references profiles(id) on delete cascade,
@@ -18,6 +18,7 @@ create table lesson_requests (
 
 alter table lesson_requests enable row level security;
 
+drop policy if exists "student_manage_own_requests" on lesson_requests;
 create policy "student_manage_own_requests" on lesson_requests
   for all to authenticated
   using (
@@ -27,11 +28,13 @@ create policy "student_manage_own_requests" on lesson_requests
     student_id in (select id from students where profile_id = auth.uid())
   );
 
+drop policy if exists "instructor_manage_requests" on lesson_requests;
 create policy "instructor_manage_requests" on lesson_requests
   for all to authenticated
   using (instructor_id = auth.uid())
   with check (instructor_id = auth.uid());
 
+drop trigger if exists set_updated_at on lesson_requests;
 create trigger set_updated_at before update on lesson_requests
   for each row execute function set_updated_at();
 
@@ -39,6 +42,7 @@ create trigger set_updated_at before update on lesson_requests
 alter table lesson_notes add column if not exists student_feedback text;
 
 -- 3. Allow students to cancel their own upcoming bookings
+drop policy if exists "student_cancel_own_booking" on bookings;
 create policy "student_cancel_own_booking" on bookings
   for update to authenticated
   using (
@@ -51,6 +55,7 @@ create policy "student_cancel_own_booking" on bookings
   );
 
 -- 4. Allow students to update their own lesson feedback
+drop policy if exists "student_update_feedback" on lesson_notes;
 create policy "student_update_feedback" on lesson_notes
   for update to authenticated
   using (

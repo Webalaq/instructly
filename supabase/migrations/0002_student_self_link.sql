@@ -2,6 +2,7 @@
 -- and to create a new student record when signing up with an invite code.
 
 -- Policy: student can update their own profile_id on a record that matches their email
+drop policy if exists "student_link_self_by_email" on students;
 create policy "student_link_self_by_email" on students
   for update to authenticated
   using (
@@ -13,6 +14,7 @@ create policy "student_link_self_by_email" on students
   );
 
 -- Policy: student can insert a record for themselves (linked to an instructor)
+drop policy if exists "student_insert_self" on students;
 create policy "student_insert_self" on students
   for insert to authenticated
   with check (

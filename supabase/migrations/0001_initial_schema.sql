@@ -12,7 +12,7 @@ create extension if not exists "btree_gist";  -- needed for exclusion constraint
 -- =============================================================
 -- 1. profiles
 -- =============================================================
-create table profiles (
+create table if not exists profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
   role       text not null check (role in ('instructor', 'student', 'admin')),
   full_name  text not null,
@@ -41,17 +41,20 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
 -- RLS: users can read own profile, instructors can read student profiles
+drop policy if exists "users_read_own_profile" on profiles;
 create policy "users_read_own_profile" on profiles
   for select to authenticated
   using (id = auth.uid());
 
 -- NOTE: "instructors_read_student_profiles" policy created after students table
 
+drop policy if exists "users_update_own_profile" on profiles;
 create policy "users_update_own_profile" on profiles
   for update to authenticated
   using (id = auth.uid())
@@ -60,7 +63,7 @@ create policy "users_update_own_profile" on profiles
 -- =============================================================
 -- 2. instructor_settings
 -- =============================================================
-create table instructor_settings (
+create table if not exists instructor_settings (
   instructor_id          uuid primary key references profiles(id) on delete cascade,
   hourly_rate_pence      integer,
   default_lesson_minutes integer default 60 check (default_lesson_minutes in (60, 90, 120)),
@@ -74,6 +77,7 @@ create table instructor_settings (
 
 alter table instructor_settings enable row level security;
 
+drop policy if exists "instructor_full_access" on instructor_settings;
 create policy "instructor_full_access" on instructor_settings
   for all to authenticated
   using (instructor_id = auth.uid())
@@ -82,6 +86,7 @@ create policy "instructor_full_access" on instructor_settings
 -- NOTE: "student_read_instructor_settings" policy created after students table
 
 -- Anon users can validate invite codes during signup
+drop policy if exists "anon_read_invite_code" on instructor_settings;
 create policy "anon_read_invite_code" on instructor_settings
   for select to anon
   using (true);
@@ -89,7 +94,7 @@ create policy "anon_read_invite_code" on instructor_settings
 -- =============================================================
 -- 3. students
 -- =============================================================
-create table students (
+create table if not exists students (
   id            uuid primary key default gen_random_uuid(),
   instructor_id uuid not null references profiles(id) on delete cascade,
   profile_id    uuid references profiles(id) on delete set null,
@@ -106,16 +111,19 @@ create table students (
 
 alter table students enable row level security;
 
+drop policy if exists "instructor_full_access" on students;
 create policy "instructor_full_access" on students
   for all to authenticated
   using (instructor_id = auth.uid())
   with check (instructor_id = auth.uid());
 
+drop policy if exists "student_read_own" on students;
 create policy "student_read_own" on students
   for select to authenticated
   using (profile_id = auth.uid());
 
 -- Deferred policies that reference students table
+drop policy if exists "instructors_read_student_profiles" on profiles;
 create policy "instructors_read_student_profiles" on profiles
   for select to authenticated
   using (
@@ -125,6 +133,7 @@ create policy "instructors_read_student_profiles" on profiles
     )
   );
 
+drop policy if exists "student_read_instructor_settings" on instructor_settings;
 create policy "student_read_instructor_settings" on instructor_settings
   for select to authenticated
   using (
@@ -136,7 +145,7 @@ create policy "student_read_instructor_settings" on instructor_settings
 -- =============================================================
 -- 4. availability_slots
 -- =============================================================
-create table availability_slots (
+create table if not exists availability_slots (
   id            uuid primary key default gen_random_uuid(),
   instructor_id uuid not null references profiles(id) on delete cascade,
   type          text not null check (type in ('recurring', 'one_off', 'blocked')),
@@ -152,11 +161,13 @@ create table availability_slots (
 
 alter table availability_slots enable row level security;
 
+drop policy if exists "instructor_full_access" on availability_slots;
 create policy "instructor_full_access" on availability_slots
   for all to authenticated
   using (instructor_id = auth.uid())
   with check (instructor_id = auth.uid());
 
+drop policy if exists "student_read_instructor_availability" on availability_slots;
 create policy "student_read_instructor_availability" on availability_slots
   for select to authenticated
   using (
@@ -168,7 +179,7 @@ create policy "student_read_instructor_availability" on availability_slots
 -- =============================================================
 -- 5. bookings
 -- =============================================================
-create table bookings (
+create table if not exists bookings (
   id                  uuid primary key default gen_random_uuid(),
   instructor_id       uuid not null references profiles(id) on delete cascade,
   student_id          uuid not null references students(id) on delete cascade,
@@ -194,11 +205,13 @@ create table bookings (
 
 alter table bookings enable row level security;
 
+drop policy if exists "instructor_full_access" on bookings;
 create policy "instructor_full_access" on bookings
   for all to authenticated
   using (instructor_id = auth.uid())
   with check (instructor_id = auth.uid());
 
+drop policy if exists "student_read_own" on bookings;
 create policy "student_read_own" on bookings
   for select to authenticated
   using (
@@ -210,7 +223,7 @@ create policy "student_read_own" on bookings
 -- =============================================================
 -- 6. lesson_notes
 -- =============================================================
-create table lesson_notes (
+create table if not exists lesson_notes (
   id                       uuid primary key default gen_random_uuid(),
   booking_id               uuid not null unique references bookings(id) on delete cascade,
   summary                  text not null,
@@ -223,6 +236,7 @@ create table lesson_notes (
 alter table lesson_notes enable row level security;
 
 -- Instructor access via booking ownership
+drop policy if exists "instructor_full_access" on lesson_notes;
 create policy "instructor_full_access" on lesson_notes
   for all to authenticated
   using (
@@ -237,6 +251,7 @@ create policy "instructor_full_access" on lesson_notes
   );
 
 -- Students can read notes for their own bookings (except private notes — handled in app layer)
+drop policy if exists "student_read_own" on lesson_notes;
 create policy "student_read_own" on lesson_notes
   for select to authenticated
   using (
@@ -250,7 +265,7 @@ create policy "student_read_own" on lesson_notes
 -- =============================================================
 -- 7. skill_ratings
 -- =============================================================
-create table skill_ratings (
+create table if not exists skill_ratings (
   id         uuid primary key default gen_random_uuid(),
   booking_id uuid not null references bookings(id) on delete cascade,
   student_id uuid not null references students(id) on delete cascade,
@@ -275,6 +290,7 @@ create table skill_ratings (
 
 alter table skill_ratings enable row level security;
 
+drop policy if exists "instructor_full_access" on skill_ratings;
 create policy "instructor_full_access" on skill_ratings
   for all to authenticated
   using (
@@ -288,6 +304,7 @@ create policy "instructor_full_access" on skill_ratings
     )
   );
 
+drop policy if exists "student_read_own" on skill_ratings;
 create policy "student_read_own" on skill_ratings
   for select to authenticated
   using (
@@ -299,7 +316,7 @@ create policy "student_read_own" on skill_ratings
 -- =============================================================
 -- 8. subscriptions
 -- =============================================================
-create table subscriptions (
+create table if not exists subscriptions (
   instructor_id          uuid primary key references profiles(id) on delete cascade,
   stripe_customer_id     text unique,
   stripe_subscription_id text unique,
@@ -313,6 +330,7 @@ create table subscriptions (
 
 alter table subscriptions enable row level security;
 
+drop policy if exists "instructor_read_own" on subscriptions;
 create policy "instructor_read_own" on subscriptions
   for select to authenticated
   using (instructor_id = auth.uid());
@@ -323,7 +341,7 @@ create policy "instructor_read_own" on subscriptions
 -- =============================================================
 -- 9. whatsapp_messages
 -- =============================================================
-create table whatsapp_messages (
+create table if not exists whatsapp_messages (
   id              uuid primary key default gen_random_uuid(),
   booking_id      uuid references bookings(id) on delete set null,
   recipient_phone text not null,
@@ -337,6 +355,7 @@ create table whatsapp_messages (
 
 alter table whatsapp_messages enable row level security;
 
+drop policy if exists "instructor_read_own" on whatsapp_messages;
 create policy "instructor_read_own" on whatsapp_messages
   for select to authenticated
   using (
@@ -350,11 +369,11 @@ create policy "instructor_read_own" on whatsapp_messages
 -- =============================================================
 -- Indexes
 -- =============================================================
-create index idx_bookings_instructor_start on bookings (instructor_id, start_at);
-create index idx_bookings_student_start on bookings (student_id, start_at);
-create index idx_students_instructor_status on students (instructor_id, status);
-create index idx_skill_ratings_student_skill on skill_ratings (student_id, skill_key);
-create index idx_whatsapp_messages_booking on whatsapp_messages (booking_id);
+create index if not exists idx_bookings_instructor_start on bookings (instructor_id, start_at);
+create index if not exists idx_bookings_student_start on bookings (student_id, start_at);
+create index if not exists idx_students_instructor_status on students (instructor_id, status);
+create index if not exists idx_skill_ratings_student_skill on skill_ratings (student_id, skill_key);
+create index if not exists idx_whatsapp_messages_booking on whatsapp_messages (booking_id);
 
 -- =============================================================
 -- updated_at trigger (reusable)
@@ -370,29 +389,38 @@ end;
 $$;
 
 -- Apply to all tables with updated_at
+drop trigger if exists set_updated_at on profiles;
 create trigger set_updated_at before update on profiles
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on instructor_settings;
 create trigger set_updated_at before update on instructor_settings
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on students;
 create trigger set_updated_at before update on students
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on availability_slots;
 create trigger set_updated_at before update on availability_slots
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on bookings;
 create trigger set_updated_at before update on bookings
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on lesson_notes;
 create trigger set_updated_at before update on lesson_notes
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on skill_ratings;
 create trigger set_updated_at before update on skill_ratings
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on subscriptions;
 create trigger set_updated_at before update on subscriptions
   for each row execute function public.set_updated_at();
 
+drop trigger if exists set_updated_at on whatsapp_messages;
 create trigger set_updated_at before update on whatsapp_messages
   for each row execute function public.set_updated_at();
