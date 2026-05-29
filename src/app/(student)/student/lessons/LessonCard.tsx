@@ -104,17 +104,18 @@ export default function LessonCard({ lesson, canCancel }: { lesson: Lesson; canC
 
       {/* Cancel form */}
       {cancelling && (
-        <div className="mt-3 space-y-2 border-t pt-3">
+        <div className="mt-3 space-y-3 border-t pt-3">
           <Input
             placeholder="Reason for cancelling (optional)"
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
+            className="h-12 text-base sm:text-sm"
           />
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setCancelling(false)} disabled={loading}>
+            <Button variant="outline" className="h-11 flex-1" onClick={() => setCancelling(false)} disabled={loading}>
               Back
             </Button>
-            <Button size="sm" variant="destructive" onClick={handleCancel} disabled={loading}>
+            <Button variant="destructive" className="h-11 flex-1" onClick={handleCancel} disabled={loading}>
               {loading ? "Cancelling..." : "Confirm cancel"}
             </Button>
           </div>
@@ -123,18 +124,19 @@ export default function LessonCard({ lesson, canCancel }: { lesson: Lesson; canC
 
       {/* Feedback form */}
       {feedbackMode && (
-        <div className="mt-3 space-y-2 border-t pt-3">
+        <div className="mt-3 space-y-3 border-t pt-3">
           <Textarea
-            rows={2}
+            rows={3}
             placeholder="How did the lesson go? Any feedback..."
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
+            className="text-base sm:text-sm"
           />
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setFeedbackMode(false)} disabled={loading}>
+            <Button variant="outline" className="h-11 flex-1" onClick={() => setFeedbackMode(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button size="sm" onClick={handleFeedback} disabled={loading || !feedback.trim()}>
+            <Button className="h-11 flex-1" onClick={handleFeedback} disabled={loading || !feedback.trim()}>
               {loading ? "Saving..." : "Save feedback"}
             </Button>
           </div>
@@ -145,12 +147,12 @@ export default function LessonCard({ lesson, canCancel }: { lesson: Lesson; canC
       {!cancelling && !feedbackMode && (
         <div className="mt-3 flex gap-2 border-t pt-3">
           {canCancel && lesson.status === "scheduled" && (
-            <Button size="sm" variant="outline" className="text-destructive" onClick={() => setCancelling(true)}>
+            <Button variant="outline" className="h-11 text-destructive active:scale-95 transition-transform" onClick={() => setCancelling(true)}>
               Cancel lesson
             </Button>
           )}
           {lesson.status === "completed" && note && (
-            <Button size="sm" variant="outline" onClick={() => setFeedbackMode(true)}>
+            <Button variant="outline" className="h-11 active:scale-95 transition-transform" onClick={() => setFeedbackMode(true)}>
               {note.student_feedback ? "Edit feedback" : "Add feedback"}
             </Button>
           )}

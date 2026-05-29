@@ -130,6 +130,23 @@
   }
 }
 
+/* Mobile touch optimizations */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent pull-to-refresh on mobile app shell */
+@supports (overscroll-behavior: none) {
+  .no-overscroll {
+    overscroll-behavior: none;
+  }
+}
+
 @media print {
   nav,
   header,

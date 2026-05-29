@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import {
   format,
   startOfMonth,
@@ -35,6 +35,27 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
+  // Swipe handling
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const swiping = useRef(false);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    swiping.current = true;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!swiping.current) return;
+    swiping.current = false;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      setCurrentMonth((d) => dx > 0 ? subMonths(d, 1) : addMonths(d, 1));
+    }
+  }, []);
+
   const days = useMemo(() => {
     return eachDayOfInterval({
       start: startOfMonth(currentMonth),
@@ -63,17 +84,21 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
     <div className="space-y-6">
       {/* Month navigation */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={() => setCurrentMonth((d) => subMonths(d, 1))}>
-          <ChevronLeftIcon className="size-4" />
+        <Button variant="outline" size="icon" className="size-10" onClick={() => setCurrentMonth((d) => subMonths(d, 1))}>
+          <ChevronLeftIcon className="size-5" />
         </Button>
         <h2 className="text-lg font-semibold">{format(currentMonth, "MMMM yyyy")}</h2>
-        <Button variant="outline" size="sm" onClick={() => setCurrentMonth((d) => addMonths(d, 1))}>
-          <ChevronRightIcon className="size-4" />
+        <Button variant="outline" size="icon" className="size-10" onClick={() => setCurrentMonth((d) => addMonths(d, 1))}>
+          <ChevronRightIcon className="size-5" />
         </Button>
       </div>
 
-      {/* Calendar grid */}
-      <div className="rounded-xl border overflow-hidden">
+      {/* Calendar grid with swipe */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="rounded-xl border overflow-hidden"
+      >
         <div className="grid grid-cols-7 border-b bg-muted/50">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
             <div key={d} className="p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
@@ -93,11 +118,11 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
                 key={key}
                 type="button"
                 onClick={() => setSelectedDate(day)}
-                className={`border-b border-r p-2 min-h-[52px] text-left transition-colors ${
-                  isSelected ? "bg-primary/10 ring-1 ring-primary" : isToday ? "bg-accent" : "hover:bg-accent/50"
+                className={`border-b border-r p-2 min-h-[52px] text-left transition-colors active:bg-accent/70 ${
+                  isSelected ? "bg-primary/10 ring-1 ring-primary" : isToday ? "bg-accent" : ""
                 }`}
               >
-                <div className={`text-sm ${isToday ? "font-bold text-primary" : ""}`}>
+                <div className={`text-sm ${isToday ? "flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold" : ""}`}>
                   {format(day, "d")}
                 </div>
                 {dayBookings.length > 0 && (
@@ -105,7 +130,7 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
                     {dayBookings.map((b) => (
                       <span
                         key={b.id}
-                        className={`size-1.5 rounded-full ${
+                        className={`size-2 rounded-full ${
                           b.status === "scheduled" ? "bg-primary" : "bg-muted-foreground"
                         }`}
                       />
@@ -134,7 +159,7 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
           ) : (
             <div className="space-y-3">
               {selectedBookings.map((b) => (
-                <div key={b.id} className="rounded-xl border bg-card p-4">
+                <div key={b.id} className="rounded-xl border bg-card p-4 active:scale-[0.98] transition-transform">
                   <div className="flex items-center justify-between">
                     <div className="text-lg font-semibold">
                       {format(parseISO(b.start_at), "HH:mm")} – {format(parseISO(b.end_at), "HH:mm")}
@@ -176,7 +201,7 @@ export default function StudentCalendar({ bookings }: { bookings: Booking[] }) {
           return (
             <div className="space-y-2">
               {upcoming.map((b) => (
-                <div key={b.id} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
+                <div key={b.id} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3.5 active:bg-accent/50 transition-colors">
                   <div>
                     <div className="text-sm font-medium">{format(parseISO(b.start_at), "EEE d MMM")}</div>
                     <div className="text-xs text-muted-foreground">

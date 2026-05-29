@@ -162,24 +162,24 @@ export default function LessonNoteDialog({ bookingId, trigger }: LessonNoteDialo
             <div className="space-y-4">
               <Label className="text-base">Skill ratings (1–5)</Label>
               {SKILL_CATEGORIES.map((cat) => (
-                <div key={cat.key} className="space-y-2">
+                <div key={cat.key} className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground">{cat.label}</h4>
-                  <div className="grid gap-2">
+                  <div className="grid gap-3">
                     {cat.skills.map((skillKey) => (
-                      <div key={skillKey} className="flex items-center justify-between">
-                        <span className="text-sm">{SKILL_LABELS[skillKey]}</span>
-                        <div className="flex gap-1">
+                      <div key={skillKey} className="flex items-center justify-between gap-2">
+                        <span className="text-sm flex-1 min-w-0">{SKILL_LABELS[skillKey]}</span>
+                        <div className="flex gap-1.5 shrink-0">
                           {[1, 2, 3, 4, 5].map((n) => (
                             <button
                               key={n}
                               type="button"
                               onClick={() => setRating(skillKey, n)}
-                              className={`size-8 rounded text-xs font-medium transition-colors ${
+                              className={`size-10 sm:size-9 rounded-lg text-sm font-medium transition-colors active:scale-90 ${
                                 ratings[skillKey] === n
-                                  ? "bg-primary text-primary-foreground"
+                                  ? "bg-primary text-primary-foreground shadow-sm"
                                   : ratings[skillKey] && ratings[skillKey] >= n
                                     ? "bg-primary/20 text-primary"
-                                    : "border border-input hover:bg-accent"
+                                    : "border border-input active:bg-accent"
                               }`}
                             >
                               {n}

@@ -113,9 +113,9 @@ export default async function StudentProgressPage() {
                   <div key={skillKey} className="flex items-center justify-between">
                     <span className="text-sm">{SKILL_LABELS[skillKey as SkillKey]}</span>
                     <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-20 rounded-full bg-muted sm:w-28">
+                      <div className="h-3 w-24 rounded-full bg-muted sm:w-28">
                         <div
-                          className="h-2.5 rounded-full bg-primary transition-all"
+                          className="h-3 rounded-full bg-primary transition-all"
                           style={{ width: rating ? `${(rating / 5) * 100}%` : "0%" }}
                         />
                       </div>

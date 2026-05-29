@@ -33,9 +33,9 @@ export default async function InstructorLayout({
       </aside>
 
       {/* Mobile header */}
-      <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
+      <header className="flex h-14 items-center justify-between border-b bg-card/95 backdrop-blur-sm px-4 md:hidden sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
             I
           </div>
           <span className="text-base font-bold">Instructly</span>

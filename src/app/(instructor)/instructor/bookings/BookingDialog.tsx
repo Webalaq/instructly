@@ -140,7 +140,7 @@ export default function BookingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Student */}
           <div className="space-y-2">
             <Label htmlFor="studentId">Student *</Label>
@@ -148,7 +148,7 @@ export default function BookingDialog({
               id="studentId"
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
-              className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
+              className="flex h-12 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base sm:text-sm"
             >
               <option value="">Select a student</option>
               {activeStudents.map((s) => (
@@ -157,37 +157,39 @@ export default function BookingDialog({
             </select>
           </div>
 
-          {/* Date */}
-          <div className="space-y-2">
-            <Label htmlFor="date">Date *</Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-
-          {/* Start time */}
-          <div className="space-y-2">
-            <Label htmlFor="startTime">Start time *</Label>
-            <Input
-              id="startTime"
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
+          {/* Date + Start time — side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date *</Label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-12 text-base sm:text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start time *</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="h-12 text-base sm:text-sm"
+              />
+            </div>
           </div>
 
           {/* Duration */}
           <div className="space-y-2">
             <Label>Duration</Label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="flex-1">
                 <select
                   value={durationHours}
                   onChange={(e) => setDurationHours(Number(e.target.value))}
-                  className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex h-12 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base sm:text-sm"
                 >
                   {[0, 1, 2, 3].map((h) => (
                     <option key={h} value={h}>{h} hr</option>
@@ -198,7 +200,7 @@ export default function BookingDialog({
                 <select
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex h-12 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-base sm:text-sm"
                 >
                   {[0, 15, 30, 45].map((m) => (
                     <option key={m} value={m}>{m} min</option>
@@ -215,28 +217,31 @@ export default function BookingDialog({
             <span className="text-muted-foreground"> · {totalDuration} minutes</span>
           </div>
 
-          {/* Pickup */}
-          <div className="space-y-2">
-            <Label htmlFor="pickupLocation">Pickup location</Label>
-            <Input
-              id="pickupLocation"
-              placeholder="e.g. 42 High Street"
-              value={pickupLocation}
-              onChange={(e) => setPickupLocation(e.target.value)}
-            />
-          </div>
-
-          {/* Price */}
-          <div className="space-y-2">
-            <Label htmlFor="pricePounds">Price (£)</Label>
-            <Input
-              id="pricePounds"
-              type="number"
-              min={0}
-              step={0.5}
-              value={(pricePence / 100).toFixed(2)}
-              onChange={(e) => setPricePence(Math.round(Number(e.target.value) * 100))}
-            />
+          {/* Pickup + Price — side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="pickupLocation">Pickup</Label>
+              <Input
+                id="pickupLocation"
+                placeholder="42 High St"
+                value={pickupLocation}
+                onChange={(e) => setPickupLocation(e.target.value)}
+                className="h-12 text-base sm:text-sm"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pricePounds">Price (£)</Label>
+              <Input
+                id="pricePounds"
+                type="number"
+                min={0}
+                step={0.5}
+                inputMode="decimal"
+                value={(pricePence / 100).toFixed(2)}
+                onChange={(e) => setPricePence(Math.round(Number(e.target.value) * 100))}
+                className="h-12 text-base sm:text-sm"
+              />
+            </div>
           </div>
 
           {serverError && (

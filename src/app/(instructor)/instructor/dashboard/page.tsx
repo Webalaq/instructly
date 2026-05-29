@@ -145,8 +145,12 @@ export default async function InstructorDashboard() {
             {todayBookings.map((b) => {
               const student = Array.isArray(b.students) ? b.students[0] : b.students;
               return (
-                <div key={b.id} className="flex items-center gap-4 rounded-xl border bg-card p-4">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
+                <Link
+                  key={b.id}
+                  href="/instructor/bookings"
+                  className="flex items-center gap-4 rounded-xl border bg-card p-4 active:scale-[0.98] transition-all"
+                >
+                  <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
                     {student?.full_name?.[0] ?? "?"}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -164,7 +168,7 @@ export default async function InstructorDashboard() {
                       {b.status}
                     </Badge>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -175,20 +179,20 @@ export default async function InstructorDashboard() {
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Quick actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link href="/instructor/students" className="rounded-xl border bg-card p-4 text-center hover:bg-accent transition-colors">
-            <UsersIcon className="mx-auto size-6 text-primary" />
+          <Link href="/instructor/students" className="rounded-xl border bg-card p-5 text-center hover:bg-accent active:scale-[0.97] transition-all">
+            <UsersIcon className="mx-auto size-7 text-primary" />
             <span className="mt-2 block text-sm font-medium">Students</span>
           </Link>
-          <Link href="/instructor/bookings" className="rounded-xl border bg-card p-4 text-center hover:bg-accent transition-colors">
-            <CalendarIcon className="mx-auto size-6 text-primary" />
+          <Link href="/instructor/bookings" className="rounded-xl border bg-card p-5 text-center hover:bg-accent active:scale-[0.97] transition-all">
+            <CalendarIcon className="mx-auto size-7 text-primary" />
             <span className="mt-2 block text-sm font-medium">Bookings</span>
           </Link>
-          <Link href="/instructor/billing" className="rounded-xl border bg-card p-4 text-center hover:bg-accent transition-colors">
-            <BanknoteIcon className="mx-auto size-6 text-primary" />
+          <Link href="/instructor/billing" className="rounded-xl border bg-card p-5 text-center hover:bg-accent active:scale-[0.97] transition-all">
+            <BanknoteIcon className="mx-auto size-7 text-primary" />
             <span className="mt-2 block text-sm font-medium">Billing</span>
           </Link>
-          <Link href="/instructor/profile" className="rounded-xl border bg-card p-4 text-center hover:bg-accent transition-colors">
-            <ClockIcon className="mx-auto size-6 text-primary" />
+          <Link href="/instructor/profile" className="rounded-xl border bg-card p-5 text-center hover:bg-accent active:scale-[0.97] transition-all">
+            <ClockIcon className="mx-auto size-7 text-primary" />
             <span className="mt-2 block text-sm font-medium">Profile</span>
           </Link>
         </div>
