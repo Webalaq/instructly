@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { addStudentSchema, updateStudentSchema } from "@/lib/schemas/student";
+import { getPlanLimits } from "@/lib/stripe/plan-limits";
 
 export async function addStudent(data: unknown) {
   const parsed = addStudentSchema.safeParse(data);
@@ -13,6 +14,25 @@ export async function addStudent(data: unknown) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  // Enforce student limit based on subscription plan
+  const [{ count }, { data: sub }] = await Promise.all([
+    supabase
+      .from("students")
+      .select("*", { count: "exact", head: true })
+      .eq("instructor_id", user.id)
+      .neq("status", "inactive"),
+    supabase
+      .from("subscriptions")
+      .select("plan")
+      .eq("instructor_id", user.id)
+      .single(),
+  ]);
+
+  const limits = getPlanLimits(sub?.plan);
+  if ((count ?? 0) >= limits.maxStudents) {
+    return { error: `You've reached the ${limits.maxStudents} student limit on your plan. Upgrade to add more students.` };
+  }
 
   const { error } = await supabase.from("students").insert({
     instructor_id: user.id,

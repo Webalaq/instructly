@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendWhatsAppMessage } from "@/lib/twilio/send";
+import { getPlanLimits } from "@/lib/stripe/plan-limits";
 
 // Service role client for reading bookings across all instructors
 function getServiceClient() {
@@ -53,8 +54,23 @@ export async function GET(request: Request) {
 
   let sentCount = 0;
 
+  // Get subscription plans for all instructors in this batch
+  const instructorIds = [...new Set(bookings.map((b) => b.instructor_id))];
+  const { data: subs } = await supabase
+    .from("subscriptions")
+    .select("instructor_id, plan")
+    .in("instructor_id", instructorIds);
+
+  const planByInstructor = new Map(
+    (subs ?? []).map((s) => [s.instructor_id, s.plan])
+  );
+
   for (const booking of bookings) {
     if (alreadySent.has(booking.id)) continue;
+
+    // Only send WhatsApp for Premium plan subscribers
+    const limits = getPlanLimits(planByInstructor.get(booking.instructor_id));
+    if (!limits.whatsappAutomation) continue;
 
     const student = Array.isArray(booking.students) ? booking.students[0] : booking.students;
     if (!student?.phone) continue;
