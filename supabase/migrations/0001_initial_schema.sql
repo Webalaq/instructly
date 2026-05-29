@@ -50,14 +50,7 @@ create policy "users_read_own_profile" on profiles
   for select to authenticated
   using (id = auth.uid());
 
-create policy "instructors_read_student_profiles" on profiles
-  for select to authenticated
-  using (
-    role = 'student'
-    and id in (
-      select profile_id from students where instructor_id = auth.uid()
-    )
-  );
+-- NOTE: "instructors_read_student_profiles" policy created after students table
 
 create policy "users_update_own_profile" on profiles
   for update to authenticated
@@ -86,14 +79,7 @@ create policy "instructor_full_access" on instructor_settings
   using (instructor_id = auth.uid())
   with check (instructor_id = auth.uid());
 
--- Students can read their instructor's settings (for invite code validation)
-create policy "student_read_instructor_settings" on instructor_settings
-  for select to authenticated
-  using (
-    instructor_id in (
-      select instructor_id from students where profile_id = auth.uid()
-    )
-  );
+-- NOTE: "student_read_instructor_settings" policy created after students table
 
 -- Anon users can validate invite codes during signup
 create policy "anon_read_invite_code" on instructor_settings
@@ -128,6 +114,24 @@ create policy "instructor_full_access" on students
 create policy "student_read_own" on students
   for select to authenticated
   using (profile_id = auth.uid());
+
+-- Deferred policies that reference students table
+create policy "instructors_read_student_profiles" on profiles
+  for select to authenticated
+  using (
+    role = 'student'
+    and id in (
+      select profile_id from students where instructor_id = auth.uid()
+    )
+  );
+
+create policy "student_read_instructor_settings" on instructor_settings
+  for select to authenticated
+  using (
+    instructor_id in (
+      select instructor_id from students where profile_id = auth.uid()
+    )
+  );
 
 -- =============================================================
 -- 4. availability_slots

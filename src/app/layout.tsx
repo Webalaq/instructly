@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   title: "Instructly — Manage Your Driving School",
   description:
     "Bookings, lesson notes, progress tracking, and WhatsApp reminders for UK driving instructors.",
+  manifest: "/manifest.json",
+  themeColor: "#16a34a",
 };
 
 export default function RootLayout({
@@ -28,7 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
