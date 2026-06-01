@@ -33,8 +33,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Public routes — allow without auth
-  if (
-    pathname === "/" ||
+  const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/auth") ||
@@ -42,8 +41,20 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/best-") ||
     pathname.startsWith("/driving-") ||
     pathname.startsWith("/reduce-") ||
-    pathname.startsWith("/how-adis")
-  ) {
+    pathname.startsWith("/how-adis");
+
+  // Landing page: if logged in, redirect to dashboard (PWA start_url = "/")
+  if (pathname === "/") {
+    if (user) {
+      const role = user.user_metadata?.role as string | undefined;
+      const url = request.nextUrl.clone();
+      url.pathname = role === "student" ? "/student/dashboard" : "/instructor/dashboard";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
+  if (isPublic) {
     return supabaseResponse;
   }
 
