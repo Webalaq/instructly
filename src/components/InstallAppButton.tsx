@@ -9,35 +9,35 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+function getInitialPlatform() {
+  if (typeof window === "undefined") return { installed: false, ios: false };
+  if (window.matchMedia("(display-mode: standalone)").matches) return { installed: true, ios: false };
+  const ua = navigator.userAgent;
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return { installed: false, ios };
+}
+
 export function InstallAppButton() {
+  const [platform, setPlatform] = useState(getInitialPlatform);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
-    // Check if already installed (standalone mode)
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Detect iOS
-    const ua = navigator.userAgent;
-    const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    setIsIOS(ios);
-
-    // Android/desktop install prompt
     function handleBeforeInstall(e: Event) {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     }
 
+    function handleInstalled() {
+      setPlatform((prev) => ({ ...prev, installed: true }));
+    }
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    window.addEventListener("appinstalled", () => setIsInstalled(true));
+    window.addEventListener("appinstalled", handleInstalled);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleInstalled);
     };
   }, []);
 
@@ -45,12 +45,12 @@ export function InstallAppButton() {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") setIsInstalled(true);
+      if (outcome === "accepted") setPlatform((prev) => ({ ...prev, installed: true }));
       setDeferredPrompt(null);
     }
   }, [deferredPrompt]);
 
-  if (isInstalled) {
+  if (platform.installed) {
     return (
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-center gap-3">
@@ -66,7 +66,7 @@ export function InstallAppButton() {
     );
   }
 
-  if (isIOS) {
+  if (platform.ios) {
     return (
       <div className="rounded-xl border bg-card p-4 space-y-3">
         <div className="flex items-center gap-3">
