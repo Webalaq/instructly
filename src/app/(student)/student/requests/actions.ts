@@ -3,9 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { lessonRequestSchema, rescheduleRequestSchema } from "@/lib/schemas/lesson-request";
 import { computeAvailableSlots } from "@/lib/availability";
 import { sendNotification } from "@/lib/notifications/send";
+
+function getServiceRole() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 async function getStudentContext() {
   const supabase = await createClient();
@@ -201,9 +209,11 @@ export async function respondToReschedule(requestId: string, status: "accepted" 
 
   if (updateError) return { error: "Failed to update request" };
 
-  // If accepting a reschedule, update the booking
+  // If accepting a reschedule, update the booking via service role
+  // (student RLS doesn't allow updating booking times)
   if (status === "accepted" && request.type === "reschedule" && request.booking_id && request.proposed_start_at && request.proposed_end_at) {
-    const { error: bookingError } = await ctx.supabase
+    const service = getServiceRole();
+    const { error: bookingError } = await service
       .from("bookings")
       .update({
         start_at: request.proposed_start_at,

@@ -23,7 +23,12 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
-  const [error, setError] = useState<string | null>(null);
+  const authError = searchParams.get("error");
+  const [error, setError] = useState<string | null>(
+    authError === "auth_failed"
+      ? "Your confirmation link has expired or is invalid. Please sign up again."
+      : null,
+  );
 
   const {
     register,

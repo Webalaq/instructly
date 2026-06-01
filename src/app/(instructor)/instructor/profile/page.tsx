@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "./ProfileForm";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -27,7 +28,8 @@ export default async function ProfilePage() {
         </p>
       </div>
 
-      <div className="max-w-lg">
+      <div className="max-w-lg space-y-6">
+        <InstallAppButton />
         <ProfileForm
           initialValues={{
             fullName: profile?.full_name ?? "",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CopyButton } from "@/components/CopyButton";
+import { ShareInviteButton } from "@/components/ShareInviteButton";
 import { PushSubscriptionBanner } from "@/components/PushSubscriptionBanner";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -305,19 +305,16 @@ export default async function InstructorDashboard() {
         </div>
       </div>
 
-      {/* Invite code */}
+      {/* Invite students */}
       {settingsRes.data?.invite_code && (
         <div className="mt-8 rounded-xl border bg-primary p-5 text-primary-foreground">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">Your invite code</div>
-            <CopyButton text={settingsRes.data.invite_code} />
-          </div>
-          <div className="mt-2 text-2xl font-mono font-bold tracking-widest">
-            {settingsRes.data.invite_code}
-          </div>
-          <p className="mt-2 text-xs opacity-80">
-            Share this code with students so they can sign up and link to your account.
+          <div className="text-sm font-semibold">Invite students</div>
+          <p className="mt-2 text-sm opacity-80">
+            Share this link with your students so they can sign up and connect to your account.
           </p>
+          <div className="mt-3">
+            <ShareInviteButton inviteCode={settingsRes.data.invite_code} />
+          </div>
         </div>
       )}
     </div>

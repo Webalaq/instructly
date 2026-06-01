@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { lessonNoteSchema } from "@/lib/schemas/lesson-notes";
 
 export async function saveLessonNote(data: unknown) {
@@ -70,15 +71,34 @@ export async function saveLessonNote(data: unknown) {
 }
 
 export async function getLessonNote(bookingId: string) {
+  // Verify the user is the instructor for this booking
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { note: null, ratings: [] };
+
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id")
+    .eq("id", bookingId)
+    .eq("instructor_id", user.id)
+    .single();
+
+  if (!booking) return { note: null, ratings: [] };
+
+  // Use service role to read private notes column
+  // (column-level privilege revoked from authenticated role)
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
 
   const [noteRes, ratingsRes] = await Promise.all([
-    supabase
+    service
       .from("lesson_notes")
       .select("*")
       .eq("booking_id", bookingId)
       .single(),
-    supabase
+    service
       .from("skill_ratings")
       .select("*")
       .eq("booking_id", bookingId),
